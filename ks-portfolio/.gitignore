@@ -1,0 +1,16 @@
+node_modules
+.next
+out
+build
+.env.local
+.env*.local
+npm-debug.log*
+.DS_Store
+next-env.d.ts
+
+# Runtime content & secrets — generated automatically on first run.
+# Remove these lines if you *want* to commit your content to git.
+data/site-data.json
+data/admin-auth.json
+data/uploads/*
+!data/uploads/.gitkeep
