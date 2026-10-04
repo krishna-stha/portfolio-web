@@ -4,7 +4,7 @@
   const STORAGE_DATA_KEY = "ks_portfolio_data";
   const STORAGE_PASS_HASH_KEY = "ks_admin_pass_hash";
   const SESSION_UNLOCKED_KEY = "ks_admin_unlocked";
-  const DEFAULT_PASSWORD = "krishna123";
+  const DEFAULT_PASSWORD = "djsahdsahdasjdiasjdsiajdias";
 
   const DEFAULT_DATA = {
     brand: { logoUrl: "" },
