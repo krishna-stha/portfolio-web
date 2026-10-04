@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin — KS.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script>
+(function () {
+  try {
+    var saved = localStorage.getItem("ks_theme");
+    document.documentElement.setAttribute("data-theme", saved === "dark" || saved === "light" ? saved : "light");
+  } catch (e) {}
+})();
+</script>
+</head>
+<body>
+
+<div class="admin-shell">
+  <div class="admin-topbar">
+    <h1>KS. / Admin Panel</h1>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle color theme" style="margin-right:4px;">
+        <span class="knob"><svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="#0B0B0D" stroke-width="2"></svg></span>
+      </button>
+      <a class="btn btn-sm btn-outline" href="index.html">View site</a>
+      <button class="btn btn-sm btn-outline" id="logoutBtn" style="display:none;">Log out</button>
+    </div>
+  </div>
+
+  <div class="admin-body">
+
+    <div id="loginView">
+      <div class="admin-login">
+        <h2>Enter password</h2>
+        <p>This panel controls the content shown on your site, saved in this browser.</p>
+        <div class="field">
+          <label for="pw">Password</label>
+          <input type="password" id="pw" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <p class="field-error" id="loginError" style="display:none;">Incorrect password. Try again.</p>
+        <button class="btn" id="loginBtn" style="width:100%;">Unlock</button>
+        <p class="hint" style="margin-top:16px;">
+          First time here? Default password is <b>krishna123</b> — change it under Settings once inside.<br><br>
+          Heads up: since this is a static site with no server, this screen only deters casual visitors —
+          it isn't real security. Don't rely on it to protect anything sensitive.
+        </p>
+      </div>
+    </div>
+
+    <div id="dashboardView" style="display:none;">
+      <div class="admin-tabs" id="adminTabs">
+        <button class="admin-tab active" data-tab="hero">Hero</button>
+        <button class="admin-tab" data-tab="about">About</button>
+        <button class="admin-tab" data-tab="skills">Skills</button>
+        <button class="admin-tab" data-tab="experience">Experience</button>
+        <button class="admin-tab" data-tab="education">Education</button>
+        <button class="admin-tab" data-tab="projects">Projects</button>
+        <button class="admin-tab" data-tab="achievements">Achievements</button>
+        <button class="admin-tab" data-tab="socials">Socials</button>
+        <button class="admin-tab" data-tab="settings">Settings &amp; Data</button>
+      </div>
+
+      <!-- HERO -->
+      <div class="admin-panel active" data-panel="hero">
+        <div class="admin-panel-head"><h3>Hero &amp; branding</h3></div>
+        <div class="admin-form-card">
+          <div class="field" id="field_logo"></div>
+          <button class="btn btn-sm" id="saveLogoBtn">Save logo</button>
+        </div>
+        <div class="admin-form-card">
+          <div class="field"><label>Full name</label><input type="text" id="f_hero_name"></div>
+          <div class="field"><label>Role / tagline line (mono text)</label><input type="text" id="f_hero_role"></div>
+          <div class="field"><label>Tagline sentence</label><textarea id="f_hero_tagline"></textarea></div>
+          <div class="form-row2">
+            <div class="field"><label>Primary button label</label><input type="text" id="f_hero_cta1_label"></div>
+            <div class="field"><label>Primary button link (#section or URL)</label><input type="text" id="f_hero_cta1_url"></div>
+          </div>
+          <div class="form-row2">
+            <div class="field"><label>Secondary button label</label><input type="text" id="f_hero_cta2_label"></div>
+            <div class="field"><label>Secondary button link (#section or URL)</label><input type="text" id="f_hero_cta2_url"></div>
+          </div>
+          <button class="btn btn-sm" id="saveHeroBtn">Save changes</button>
+        </div>
+      </div>
+
+      <!-- ABOUT -->
+      <div class="admin-panel" data-panel="about">
+        <div class="admin-panel-head"><h3>About section</h3></div>
+        <div class="admin-form-card">
+          <div class="field" id="field_photo"></div>
+          <div class="field"><label>Initials (shown if no photo is set)</label><input type="text" id="f_about_initials" maxlength="3"></div>
+          <div class="field"><label>Bio paragraph</label><textarea id="f_about_bio" style="min-height:140px;"></textarea></div>
+          <div class="field"><label>Focus tags (comma separated)</label><input type="text" id="f_about_tags"></div>
+          <div class="field" id="field_resume"></div>
+          <button class="btn btn-sm" id="saveAboutBtn">Save changes</button>
+        </div>
+      </div>
+
+      <!-- SKILLS -->
+      <div class="admin-panel" data-panel="skills">
+        <div class="admin-panel-head"><h3>Languages &amp; tools</h3><button class="btn btn-sm" id="addSkillBtn">+ Add skill</button></div>
+        <div id="skillsAdminList"></div>
+      </div>
+
+      <!-- EXPERIENCE -->
+      <div class="admin-panel" data-panel="experience">
+        <div class="admin-panel-head"><h3>Experience</h3><button class="btn btn-sm" id="addExperienceBtn">+ Add entry</button></div>
+        <div id="experienceAdminList"></div>
+      </div>
+
+      <!-- EDUCATION -->
+      <div class="admin-panel" data-panel="education">
+        <div class="admin-panel-head"><h3>Education</h3><button class="btn btn-sm" id="addEducationBtn">+ Add entry</button></div>
+        <div id="educationAdminList"></div>
+      </div>
+
+      <!-- PROJECTS -->
+      <div class="admin-panel" data-panel="projects">
+        <div class="admin-panel-head"><h3>Projects</h3><button class="btn btn-sm" id="addProjectBtn">+ Add project</button></div>
+        <p class="hint" style="margin-bottom:16px;">Add multiple images to show an inline carousel on the project card (a different look from the Achievements carousel — no click-to-expand, it's always visible).</p>
+        <div id="projectsAdminList"></div>
+      </div>
+
+      <!-- ACHIEVEMENTS -->
+      <div class="admin-panel" data-panel="achievements">
+        <div class="admin-panel-head"><h3>Achievements</h3><button class="btn btn-sm" id="addAchievementBtn">+ Add achievement</button></div>
+        <p class="hint" style="margin-bottom:16px;">Add multiple images to show a swipeable carousel when the card is clicked open on the site.</p>
+        <div id="achievementsAdminList"></div>
+      </div>
+
+      <!-- SOCIALS -->
+      <div class="admin-panel" data-panel="socials">
+        <div class="admin-panel-head"><h3>Socials</h3><button class="btn btn-sm" id="addSocialBtn">+ Add link</button></div>
+        <div id="socialsAdminList"></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="admin-panel" data-panel="settings">
+        <div class="admin-panel-head"><h3>Settings &amp; data</h3></div>
+        <div class="admin-form-card">
+          <h3 style="font-size:16px;margin-bottom:14px;">Change admin password</h3>
+          <div class="field"><label>New password</label><input type="password" id="f_new_pass"></div>
+          <button class="btn btn-sm" id="changePassBtn">Update password</button>
+        </div>
+        <div class="admin-form-card">
+          <h3 style="font-size:16px;margin-bottom:6px;">Backup &amp; transfer</h3>
+          <p class="hint" style="margin-bottom:16px;">
+            This is a static site with no server, so everything you edit here is saved only in <b>this browser</b>.
+            It will not appear for visitors on other devices, and clearing your browser data erases it. Export a
+            backup regularly, and import it on any other browser/device (or after clearing site data) to restore it.
+          </p>
+          <div class="data-actions">
+            <button class="btn btn-sm" id="exportDataBtn">Export data.json</button>
+            <label class="btn btn-sm btn-outline" style="cursor:pointer;">Import data.json<input type="file" id="importDataInput" accept=".json" style="display:none;"></label>
+            <button class="btn btn-sm btn-outline" id="resetDataBtn">Reset to defaults</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="admin.js"></script>
+</body>
+</html>

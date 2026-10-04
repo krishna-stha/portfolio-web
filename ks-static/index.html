@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Krishna Sharan Shrestha — AI / ML Enthusiast</title>
+<meta name="description" content="Portfolio of Krishna Sharan Shrestha, AI and ML enthusiast.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script>
+// Applied before paint so the saved theme never flashes the wrong palette.
+(function () {
+  try {
+    var saved = localStorage.getItem("ks_theme");
+    var theme = saved === "light" || saved === "dark" ? saved : "light";
+    document.documentElement.setAttribute("data-theme", theme);
+  } catch (e) {}
+})();
+</script>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a href="#home" class="nav-logo" id="navLogo"><span class="dot"></span>KS.</a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#about">About</a></li>
+      <li><a href="#experience">Experience</a></li>
+      <li><a href="#education">Education</a></li>
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#achievements">Achievements</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle color theme">
+        <span class="knob"><svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="#0B0B0D" stroke-width="2"></svg></span>
+      </button>
+      <button class="nav-burger" id="navBurger" aria-label="Open menu"><span></span></button>
+    </div>
+  </div>
+  <ul class="nav-links-mobile" id="navLinksMobile">
+    <li><a href="#about">About</a></li>
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#education">Education</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#achievements">Achievements</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<main id="home">
+
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-copy">
+        <p class="hero-eyebrow"><span class="blip"></span>AVAILABLE FOR COLLABORATIONS</p>
+        <h1 class="hero-title" id="heroName">Krishna Sharan<br><span class="accent">Shrestha</span></h1>
+        <p class="hero-role" id="heroRole">// AI & Machine Learning Enthusiast</p>
+        <p class="hero-tagline" id="heroTagline">Exploring how machines learn, reason, and see — one model at a time.</p>
+        <div class="hero-ctas">
+          <a href="#experience" class="btn" id="heroCtaPrimary">View my work</a>
+          <a href="#contact" class="btn btn-outline" id="heroCtaSecondary">Get in touch</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="doodle-window dw-terminal">
+          <div class="dw-bar"><span></span><span></span><span></span></div>
+          <div class="dw-body">&gt;&gt;&gt; <span class="c1">import</span> torch<br>&gt;&gt;&gt; model = <span class="c2">NeuralNet</span>()<br>&gt;&gt;&gt; model.<span class="c3">train</span>(epochs=100)<br>Loss: 0.0021 ✓<span class="dw-cursor"></span></div>
+        </div>
+        <div class="dw-badge">STATUS: LEARNING()</div>
+        <div class="doodle-window dw-node">
+          <div class="dw-bar"><span></span><span></span></div>
+          <svg class="node-svg" viewBox="0 0 190 90">
+            <line x1="20" y1="20" x2="95" y2="45" stroke="#0B0B0D" stroke-width="2"/>
+            <line x1="20" y1="70" x2="95" y2="45" stroke="#0B0B0D" stroke-width="2"/>
+            <line x1="95" y1="45" x2="170" y2="20" stroke="#0B0B0D" stroke-width="2"/>
+            <line x1="95" y1="45" x2="170" y2="70" stroke="#0B0B0D" stroke-width="2"/>
+            <circle cx="20" cy="20" r="8" fill="#0B0B0D"/>
+            <circle cx="20" cy="70" r="8" fill="#0B0B0D"/>
+            <circle cx="95" cy="45" r="9" fill="#F1EEE4" stroke="#0B0B0D" stroke-width="2"/>
+            <circle cx="170" cy="20" r="8" fill="#0B0B0D"/>
+            <circle cx="170" cy="70" r="8" fill="#0B0B0D"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="about" id="about">
+    <div class="wrap">
+      <div class="section-head"><div><p class="section-num">01 / ABOUT</p><h2 class="section-title">About me</h2></div></div>
+      <div class="about-grid">
+        <div class="about-photo"><div class="corner tl"></div><span class="initials" id="aboutInitials">KS</span><img id="aboutPhotoImg" style="display:none;" alt=""><div class="corner br"></div></div>
+        <div>
+          <p class="about-bio" id="aboutBio">I'm Krishna — an AI and ML enthusiast who enjoys turning messy data into models that actually work.</p>
+          <div class="about-tags" id="aboutTags"></div>
+          <div class="about-resume" id="aboutResumeWrap" style="display:none;">
+            <a class="btn" id="aboutResumeLink" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M4 20h16"/></svg>
+              Download resume
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="skills-section" id="skills">
+    <div class="wrap">
+      <div class="section-head"><div><p class="section-num">02 / STACK</p><h2 class="section-title">Languages &amp; tools</h2></div></div>
+      <div class="skills-grid" id="skillsList"></div>
+    </div>
+  </section>
+
+  <section class="journey-section" id="journey">
+    <div class="wrap">
+      <div class="journey-sub" id="experience">
+        <div class="journey-sub-head"><h3>Where I've worked</h3><span>03 / EXPERIENCE</span></div>
+        <div class="timeline" id="experienceList"></div>
+      </div>
+      <div class="journey-sub" id="education">
+        <div class="journey-sub-head"><h3>What I've studied</h3><span>04 / EDUCATION</span></div>
+        <div class="timeline" id="educationList"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="projects-section" id="projects">
+    <div class="wrap">
+      <div class="section-head"><div><p class="section-num">05 / PROJECTS</p><h2 class="section-title">Things I've built</h2></div></div>
+      <div class="projects-grid" id="projectsList"></div>
+    </div>
+  </section>
+
+  <section class="achievements-section" id="achievements">
+    <div class="wrap">
+      <div class="section-head"><div><p class="section-num">06 / ACHIEVEMENTS</p><h2 class="section-title">Milestones</h2></div></div>
+      <div class="achievements-grid" id="achievementsList"></div>
+    </div>
+  </section>
+
+  <section class="contact-section" id="contact">
+    <div class="wrap">
+      <div class="contact-inner">
+        <div>
+          <h2 class="contact-title">Let's build something intelligent together.</h2>
+          <p class="contact-sub">Open to collaborations, internships, and interesting conversations about AI. Reach out on any of these.</p>
+        </div>
+        <div class="social-list" id="socialsList"></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-top">
+      <div><p class="footer-name" id="footerName">Krishna Sharan Shrestha</p><p class="footer-role">AI &amp; ML Enthusiast — building &amp; learning in public</p></div>
+      <ul class="footer-links">
+        <li><a href="#about">About</a></li><li><a href="#experience">Experience</a></li><li><a href="#education">Education</a></li>
+        <li><a href="#projects">Projects</a></li><li><a href="#achievements">Achievements</a></li><li><a href="#contact">Contact</a></li>
+      </ul>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">© <span id="year"></span> <span id="footerCopyName">Krishna Sharan Shrestha</span>. All rights reserved.</p>
+      <a href="#home" class="back-to-top" id="backToTop">Back to top ↑</a>
+      <a href="admin.html" class="admin-entry">Site admin</a>
+    </div>
+  </div>
+</footer>
+
+<!-- Achievement expanded view (manual FLIP-style expand animation, built in script.js) -->
+<div class="achievement-overlay" id="achievementOverlay">
+  <div class="achievement-expanded" id="achievementExpanded">
+    <button class="achievement-expanded-close" id="achievementClose" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div id="achievementCarouselSlot"></div>
+    <div class="achievement-expanded-body">
+      <span class="achievement-expanded-year" id="achievementExpYear"></span>
+      <h3 class="achievement-expanded-title" id="achievementExpTitle"></h3>
+      <p class="achievement-expanded-desc" id="achievementExpDesc"></p>
+      <a class="btn btn-sm achievement-expanded-credential" id="achievementExpCredential" target="_blank" rel="noopener noreferrer" style="display:none;">
+        View credential
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
