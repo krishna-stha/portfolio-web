@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const CONFIGURED = window.SUPABASE_URL && !window.SUPABASE_URL.includes("YOUR-PROJECT-REF");
+  const CONFIGURED = window.SUPABASE_URL && !window.SUPABASE_URL.includes("xtrdyyvyjklceybvloyd");
   const supabaseClient = CONFIGURED ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY) : null;
 
   const DEFAULT_DATA = {
