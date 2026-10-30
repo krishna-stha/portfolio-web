@@ -1,24 +1,55 @@
 (function () {
   "use strict";
 
-  const CONFIGURED = window.SUPABASE_URL && !window.SUPABASE_URL.includes("xtrdyyvyjklceybvloyd");
-  const supabaseClient = CONFIGURED ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY) : null;
+  // const CONFIGURED = window.SUPABASE_URL && !window.SUPABASE_URL.includes("xtrdyyvyjklceybvloyd");
+  const CONFIGURED =
+    typeof window.SUPABASE_URL === "string" &&
+    window.SUPABASE_URL.startsWith("https://") &&
+    typeof window.SUPABASE_ANON_KEY === "string" &&
+    window.SUPABASE_ANON_KEY.length > 0 &&
+    window.supabase &&
+    typeof window.supabase.createClient === "function";
+
+  const supabaseClient = CONFIGURED
+    ? window.supabase.createClient(
+        window.SUPABASE_URL,
+        window.SUPABASE_ANON_KEY,
+      )
+    : null;
+
+  const supabaseClient = CONFIGURED
+    ? window.supabase.createClient(
+        window.SUPABASE_URL,
+        window.SUPABASE_ANON_KEY,
+      )
+    : null;
 
   const DEFAULT_DATA = {
     brand: { logoUrl: "" },
     hero: {
       name: "Krishna Sharan Shrestha",
       role: "// AI & Machine Learning Enthusiast",
-      tagline: "Exploring how machines learn, reason, and see — one model at a time.",
-      cta1Label: "View my work", cta1Url: "#experience",
-      cta2Label: "Get in touch", cta2Url: "#contact"
+      tagline:
+        "Exploring how machines learn, reason, and see — one model at a time.",
+      cta1Label: "View my work",
+      cta1Url: "#experience",
+      cta2Label: "Get in touch",
+      cta2Url: "#contact",
     },
     about: {
-      initials: "KS", photoUrl: "", resumeUrl: "", resumeName: "",
+      initials: "KS",
+      photoUrl: "",
+      resumeUrl: "",
+      resumeName: "",
       bio: "I'm Krishna — an AI and ML enthusiast who enjoys turning messy data into models that actually work. I like breaking down how things learn, and I'm always experimenting with something new.",
-      tags: ["Machine Learning", "Deep Learning", "Computer Vision"]
+      tags: ["Machine Learning", "Deep Learning", "Computer Vision"],
     },
-    skills: [], experience: [], education: [], projects: [], achievements: [], socials: []
+    skills: [],
+    experience: [],
+    education: [],
+    projects: [],
+    achievements: [],
+    socials: [],
   };
 
   function normalize(d) {
@@ -30,14 +61,38 @@
       skills: Array.isArray(d.skills) ? d.skills : [],
       experience: Array.isArray(d.experience) ? d.experience : [],
       education: Array.isArray(d.education) ? d.education : [],
-      projects: Array.isArray(d.projects) ? d.projects.map((p) => Object.assign({ projectUrl: "" }, p, { imageUrls: Array.isArray(p.imageUrls) ? p.imageUrls : p.imageUrl ? [p.imageUrl] : [] })) : [],
-      achievements: Array.isArray(d.achievements) ? d.achievements.map((a) => Object.assign({ credentialUrl: "" }, a, { imageUrls: Array.isArray(a.imageUrls) ? a.imageUrls : a.imageUrl ? [a.imageUrl] : [] })) : [],
-      socials: Array.isArray(d.socials) ? d.socials : []
+      projects: Array.isArray(d.projects)
+        ? d.projects.map((p) =>
+            Object.assign({ projectUrl: "" }, p, {
+              imageUrls: Array.isArray(p.imageUrls)
+                ? p.imageUrls
+                : p.imageUrl
+                  ? [p.imageUrl]
+                  : [],
+            }),
+          )
+        : [],
+      achievements: Array.isArray(d.achievements)
+        ? d.achievements.map((a) =>
+            Object.assign({ credentialUrl: "" }, a, {
+              imageUrls: Array.isArray(a.imageUrls)
+                ? a.imageUrls
+                : a.imageUrl
+                  ? [a.imageUrl]
+                  : [],
+            }),
+          )
+        : [],
+      socials: Array.isArray(d.socials) ? d.socials : [],
     });
   }
   async function loadData() {
     try {
-      const { data: row, error } = await supabaseClient.from("site_content").select("data").eq("id", 1).single();
+      const { data: row, error } = await supabaseClient
+        .from("site_content")
+        .select("data")
+        .eq("id", 1)
+        .single();
       if (error) throw error;
       return normalize(row && row.data ? row.data : {});
     } catch (e) {
@@ -60,24 +115,42 @@
   }
 
   let data = JSON.parse(JSON.stringify(DEFAULT_DATA));
-  function uid() { return "id_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function uid() {
+    return (
+      "id_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
+    );
+  }
 
   /* ---------- ICONS ---------- */
-  const EDIT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
-  const TRASH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"/></svg>';
-  const GRIP_ICON = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
-  const UP_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 15l6-6 6 6"/></svg>';
-  const DOWN_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
-  const CHEV_LEFT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>';
-  const CHEV_RIGHT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>';
-  const PLUS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>';
+  const EDIT_ICON =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
+  const TRASH_ICON =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"/></svg>';
+  const GRIP_ICON =
+    '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
+  const UP_ICON =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 15l6-6 6 6"/></svg>';
+  const DOWN_ICON =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
+  const CHEV_LEFT =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>';
+  const CHEV_RIGHT =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>';
+  const PLUS_ICON =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>';
 
   /* ---------- AUTH (real, server-verified — Supabase Auth) ---------- */
   async function signIn(email, pw) {
-    const { data: result, error } = await supabaseClient.auth.signInWithPassword({ email, password: pw });
-    return { ok: !error && !!(result && result.session), error: error ? error.message : null };
+    const { data: result, error } =
+      await supabaseClient.auth.signInWithPassword({ email, password: pw });
+    return {
+      ok: !error && !!(result && result.session),
+      error: error ? error.message : null,
+    };
   }
-  async function signOut() { await supabaseClient.auth.signOut(); }
+  async function signOut() {
+    await supabaseClient.auth.signOut();
+  }
   async function getSession() {
     const { data: result } = await supabaseClient.auth.getSession();
     return result.session;
@@ -99,11 +172,20 @@
 
   /* ---------- FILE -> Supabase Storage upload ---------- */
   const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
-  const DOC_TYPES = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+  const DOC_TYPES = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ];
   const EXT_BY_TYPE = {
-    "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif",
-    "application/pdf": "pdf", "application/msword": "doc",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx"
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "application/pdf": "pdf",
+    "application/msword": "doc",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+      "docx",
   };
   const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
   const MAX_DOC_BYTES = 10 * 1024 * 1024;
@@ -113,15 +195,30 @@
     const allowed = kind === "document" ? DOC_TYPES : IMAGE_TYPES;
     const maxBytes = kind === "document" ? MAX_DOC_BYTES : MAX_IMAGE_BYTES;
     if (allowed.indexOf(file.type) === -1) {
-      throw kind === "document" ? "Only PDF, DOC or DOCX files are allowed" : "Only PNG, JPEG, WEBP or GIF images are allowed";
+      throw kind === "document"
+        ? "Only PDF, DOC or DOCX files are allowed"
+        : "Only PNG, JPEG, WEBP or GIF images are allowed";
     }
     if (file.size > maxBytes) {
-      throw "File must be " + (maxBytes / (1024 * 1024)).toFixed(0) + "MB or smaller";
+      throw (
+        "File must be " +
+        (maxBytes / (1024 * 1024)).toFixed(0) +
+        "MB or smaller"
+      );
     }
-    const path = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8) + "." + EXT_BY_TYPE[file.type];
-    const { error } = await supabaseClient.storage.from(BUCKET).upload(path, file, { contentType: file.type, upsert: false });
+    const path =
+      Date.now().toString(36) +
+      "-" +
+      Math.random().toString(36).slice(2, 8) +
+      "." +
+      EXT_BY_TYPE[file.type];
+    const { error } = await supabaseClient.storage
+      .from(BUCKET)
+      .upload(path, file, { contentType: file.type, upsert: false });
     if (error) throw "Upload failed: " + error.message;
-    const { data: pub } = supabaseClient.storage.from(BUCKET).getPublicUrl(path);
+    const { data: pub } = supabaseClient.storage
+      .from(BUCKET)
+      .getPublicUrl(path);
     return { url: pub.publicUrl, name: file.name };
   }
 
@@ -131,20 +228,36 @@
      ========================================================= */
   function renderImageField(container, label, value, onChange, shape) {
     container.innerHTML =
-      '<label>' + label + "</label>" +
-      '<div class="image-upload image-upload-' + (shape || "square") + '">' +
-        '<div class="image-upload-preview">' + (value ? '<img src="' + attr(value) + '" alt="">' : '<span class="image-upload-empty">No image</span>') + "</div>" +
-        '<div class="image-upload-actions">' +
-          '<button type="button" class="btn btn-sm btn-outline" data-act="upload">' + (value ? "Replace image" : "Upload image") + "</button>" +
-          (value ? '<button type="button" class="btn btn-sm btn-outline" data-act="remove">Remove</button>' : "") +
-          '<input type="text" class="image-upload-url" data-act="url" placeholder="...or paste an image URL" value="' + (value && !value.startsWith("data:") ? attr(value) : "") + '">' +
-        "</div>" +
-        '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;" data-act="file">' +
+      "<label>" +
+      label +
+      "</label>" +
+      '<div class="image-upload image-upload-' +
+      (shape || "square") +
+      '">' +
+      '<div class="image-upload-preview">' +
+      (value
+        ? '<img src="' + attr(value) + '" alt="">'
+        : '<span class="image-upload-empty">No image</span>') +
+      "</div>" +
+      '<div class="image-upload-actions">' +
+      '<button type="button" class="btn btn-sm btn-outline" data-act="upload">' +
+      (value ? "Replace image" : "Upload image") +
+      "</button>" +
+      (value
+        ? '<button type="button" class="btn btn-sm btn-outline" data-act="remove">Remove</button>'
+        : "") +
+      '<input type="text" class="image-upload-url" data-act="url" placeholder="...or paste an image URL" value="' +
+      (value && !value.startsWith("data:") ? attr(value) : "") +
+      '">' +
+      "</div>" +
+      '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;" data-act="file">' +
       "</div>" +
       '<p class="hint">Upload (PNG/JPEG/WEBP/GIF, up to 5MB) or paste a URL instead.</p>';
 
     const fileInput = container.querySelector('[data-act="file"]');
-    container.querySelector('[data-act="upload"]').addEventListener("click", () => fileInput.click());
+    container
+      .querySelector('[data-act="upload"]')
+      .addEventListener("click", () => fileInput.click());
     fileInput.addEventListener("change", async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -168,27 +281,56 @@
   function renderMultiImageField(container, label, values, onChange) {
     values = values || [];
     container.innerHTML =
-      '<label>' + label + "</label>" +
+      "<label>" +
+      label +
+      "</label>" +
       '<div class="multi-image-field">' +
-        values.map((url, i) =>
-          '<div class="multi-image-thumb" data-idx="' + i + '">' +
-            '<img src="' + attr(url) + '" alt="">' +
-            '<button type="button" class="thumb-remove" data-act="remove" data-idx="' + i + '" aria-label="Remove image">' + TRASH_ICON + "</button>" +
+      values
+        .map(
+          (url, i) =>
+            '<div class="multi-image-thumb" data-idx="' +
+            i +
+            '">' +
+            '<img src="' +
+            attr(url) +
+            '" alt="">' +
+            '<button type="button" class="thumb-remove" data-act="remove" data-idx="' +
+            i +
+            '" aria-label="Remove image">' +
+            TRASH_ICON +
+            "</button>" +
             (values.length > 1
               ? '<div class="thumb-move">' +
-                  '<button type="button" data-act="left" data-idx="' + i + '" ' + (i === 0 ? "disabled" : "") + " aria-label=\"Move left\">" + CHEV_LEFT + "</button>" +
-                  '<button type="button" data-act="right" data-idx="' + i + '" ' + (i === values.length - 1 ? "disabled" : "") + " aria-label=\"Move right\">" + CHEV_RIGHT + "</button>" +
+                '<button type="button" data-act="left" data-idx="' +
+                i +
+                '" ' +
+                (i === 0 ? "disabled" : "") +
+                ' aria-label="Move left">' +
+                CHEV_LEFT +
+                "</button>" +
+                '<button type="button" data-act="right" data-idx="' +
+                i +
+                '" ' +
+                (i === values.length - 1 ? "disabled" : "") +
+                ' aria-label="Move right">' +
+                CHEV_RIGHT +
+                "</button>" +
                 "</div>"
               : "") +
-          "</div>"
-        ).join("") +
-        '<button type="button" class="multi-image-add" data-act="add">' + PLUS_ICON + "<span>Add image</span></button>" +
-        '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;" data-act="file">' +
+            "</div>",
+        )
+        .join("") +
+      '<button type="button" class="multi-image-add" data-act="add">' +
+      PLUS_ICON +
+      "<span>Add image</span></button>" +
+      '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;" data-act="file">' +
       "</div>" +
       '<p class="hint">First image is the cover. Upload (up to 5MB each) or add several — order sets the carousel order.</p>';
 
     const fileInput = container.querySelector('[data-act="file"]');
-    container.querySelector('[data-act="add"]').addEventListener("click", () => fileInput.click());
+    container
+      .querySelector('[data-act="add"]')
+      .addEventListener("click", () => fileInput.click());
     fileInput.addEventListener("change", async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -229,21 +371,35 @@
      ========================================================= */
   function renderFileField(container, label, value, fileName, onChange) {
     container.innerHTML =
-      '<label>' + label + "</label>" +
+      "<label>" +
+      label +
+      "</label>" +
       '<div class="file-upload">' +
-        '<div class="file-upload-status">' +
-          (value ? '<a href="' + attr(value) + '" target="_blank" rel="noopener noreferrer" class="file-upload-name">' + escapeHtml(fileName || "Current file") + "</a>" : '<span class="file-upload-empty">No file uploaded</span>') +
-        "</div>" +
-        '<div class="image-upload-actions">' +
-          '<button type="button" class="btn btn-sm btn-outline" data-act="upload">' + (value ? "Replace file" : "Upload file") + "</button>" +
-          (value ? '<button type="button" class="btn btn-sm btn-outline" data-act="remove">Remove</button>' : "") +
-        "</div>" +
-        '<input type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none;" data-act="file">' +
+      '<div class="file-upload-status">' +
+      (value
+        ? '<a href="' +
+          attr(value) +
+          '" target="_blank" rel="noopener noreferrer" class="file-upload-name">' +
+          escapeHtml(fileName || "Current file") +
+          "</a>"
+        : '<span class="file-upload-empty">No file uploaded</span>') +
+      "</div>" +
+      '<div class="image-upload-actions">' +
+      '<button type="button" class="btn btn-sm btn-outline" data-act="upload">' +
+      (value ? "Replace file" : "Upload file") +
+      "</button>" +
+      (value
+        ? '<button type="button" class="btn btn-sm btn-outline" data-act="remove">Remove</button>'
+        : "") +
+      "</div>" +
+      '<input type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none;" data-act="file">' +
       "</div>" +
       '<p class="hint">PDF, DOC or DOCX, up to 10MB. Leave empty to hide the download button on the site.</p>';
 
     const fileInput = container.querySelector('[data-act="file"]');
-    container.querySelector('[data-act="upload"]').addEventListener("click", () => fileInput.click());
+    container
+      .querySelector('[data-act="upload"]')
+      .addEventListener("click", () => fileInput.click());
     fileInput.addEventListener("change", async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -264,58 +420,115 @@
      Projects / Achievements / Socials)
      ========================================================= */
   const SKILL_LEVELS = ["Beginner", "Intermediate", "Advanced", "Expert"];
-  const SOCIAL_ICONS = ["github", "linkedin", "twitter", "email", "kaggle", "huggingface", "medium", "link"];
+  const SOCIAL_ICONS = [
+    "github",
+    "linkedin",
+    "twitter",
+    "email",
+    "kaggle",
+    "huggingface",
+    "medium",
+    "link",
+  ];
 
   const SCHEMAS = {
     skills: {
-      title: "Skill", plural: "Skills",
-      fields: [{ key: "name", label: "Language / tool", type: "text" }, { key: "level", label: "Proficiency", type: "select", options: SKILL_LEVELS }],
-      primary: "name", secondary: (i) => i.level
+      title: "Skill",
+      plural: "Skills",
+      fields: [
+        { key: "name", label: "Language / tool", type: "text" },
+        {
+          key: "level",
+          label: "Proficiency",
+          type: "select",
+          options: SKILL_LEVELS,
+        },
+      ],
+      primary: "name",
+      secondary: (i) => i.level,
     },
     experience: {
-      title: "Experience entry", plural: "Experience entries",
+      title: "Experience entry",
+      plural: "Experience entries",
       fields: [
-        { key: "role", label: "Role / title", type: "text" }, { key: "company", label: "Company / organisation", type: "text" },
-        { key: "period", label: "Period (e.g. 2024 — Present)", type: "text" }, { key: "description", label: "Description", type: "textarea" }
+        { key: "role", label: "Role / title", type: "text" },
+        { key: "company", label: "Company / organisation", type: "text" },
+        { key: "period", label: "Period (e.g. 2024 — Present)", type: "text" },
+        { key: "description", label: "Description", type: "textarea" },
       ],
-      primary: "role", secondary: (i) => i.company + " · " + i.period
+      primary: "role",
+      secondary: (i) => i.company + " · " + i.period,
     },
     education: {
-      title: "Education entry", plural: "Education entries",
+      title: "Education entry",
+      plural: "Education entries",
       fields: [
-        { key: "degree", label: "Degree / program", type: "text" }, { key: "institution", label: "Institution", type: "text" },
-        { key: "period", label: "Period", type: "text" }, { key: "description", label: "Description", type: "textarea" }
+        { key: "degree", label: "Degree / program", type: "text" },
+        { key: "institution", label: "Institution", type: "text" },
+        { key: "period", label: "Period", type: "text" },
+        { key: "description", label: "Description", type: "textarea" },
       ],
-      primary: "degree", secondary: (i) => i.institution + " · " + i.period
+      primary: "degree",
+      secondary: (i) => i.institution + " · " + i.period,
     },
     projects: {
-      title: "Project", plural: "Projects",
+      title: "Project",
+      plural: "Projects",
       fields: [
-        { key: "title", label: "Title", type: "text" }, { key: "year", label: "Year", type: "text" },
+        { key: "title", label: "Title", type: "text" },
+        { key: "year", label: "Year", type: "text" },
         { key: "description", label: "Description", type: "textarea" },
-        { key: "projectUrl", label: "Project URL (optional — live demo or repo)", type: "text", optional: true },
-        { key: "imageUrls", label: "Images (optional — shown as an inline carousel on the card)", type: "images", optional: true }
+        {
+          key: "projectUrl",
+          label: "Project URL (optional — live demo or repo)",
+          type: "text",
+          optional: true,
+        },
+        {
+          key: "imageUrls",
+          label: "Images (optional — shown as an inline carousel on the card)",
+          type: "images",
+          optional: true,
+        },
       ],
-      primary: "title", secondary: (i) => i.year
+      primary: "title",
+      secondary: (i) => i.year,
     },
     achievements: {
-      title: "Achievement", plural: "Achievements",
+      title: "Achievement",
+      plural: "Achievements",
       fields: [
-        { key: "title", label: "Title", type: "text" }, { key: "year", label: "Year", type: "text" },
+        { key: "title", label: "Title", type: "text" },
+        { key: "year", label: "Year", type: "text" },
         { key: "description", label: "Description", type: "textarea" },
-        { key: "credentialUrl", label: "Credential URL (optional)", type: "text", optional: true },
-        { key: "imageUrls", label: "Images (optional — shown in a carousel when the card is opened)", type: "images", optional: true }
+        {
+          key: "credentialUrl",
+          label: "Credential URL (optional)",
+          type: "text",
+          optional: true,
+        },
+        {
+          key: "imageUrls",
+          label:
+            "Images (optional — shown in a carousel when the card is opened)",
+          type: "images",
+          optional: true,
+        },
       ],
-      primary: "title", secondary: (i) => i.year
+      primary: "title",
+      secondary: (i) => i.year,
     },
     socials: {
-      title: "Social link", plural: "Social links",
+      title: "Social link",
+      plural: "Social links",
       fields: [
-        { key: "label", label: "Platform name", type: "text" }, { key: "url", label: "URL", type: "text" },
-        { key: "icon", label: "Icon", type: "select", options: SOCIAL_ICONS }
+        { key: "label", label: "Platform name", type: "text" },
+        { key: "url", label: "URL", type: "text" },
+        { key: "icon", label: "Icon", type: "select", options: SOCIAL_ICONS },
       ],
-      primary: "label", secondary: (i) => i.url
-    }
+      primary: "label",
+      secondary: (i) => i.url,
+    },
   };
 
   function createListEditor(type, containerId) {
@@ -323,8 +536,13 @@
     const container = document.getElementById(containerId);
     let dragIndex = null;
 
-    function items() { return data[type]; }
-    function setItems(next) { data[type] = next; persist(data); }
+    function items() {
+      return data[type];
+    }
+    function setItems(next) {
+      data[type] = next;
+      persist(data);
+    }
 
     function render() {
       const list = items();
@@ -332,13 +550,16 @@
 
       if (list.length === 0) {
         const p = document.createElement("p");
-        p.className = "hint"; p.textContent = "Nothing added yet.";
+        p.className = "hint";
+        p.textContent = "Nothing added yet.";
         container.appendChild(p);
       }
       if (list.length > 1) {
         const p = document.createElement("p");
-        p.className = "hint"; p.style.marginBottom = "14px";
-        p.textContent = "Drag the grip handle to reorder, or use the arrows — the live site follows this order.";
+        p.className = "hint";
+        p.style.marginBottom = "14px";
+        p.textContent =
+          "Drag the grip handle to reorder, or use the arrows — the live site follows this order.";
         container.appendChild(p);
       }
 
@@ -349,20 +570,42 @@
         row.style.opacity = dragIndex === i ? "0.4" : "1";
 
         row.innerHTML =
-          (list.length > 1 ? '<span class="drag-handle">' + GRIP_ICON + "</span>" : "") +
-          '<div class="info"><b>' + escapeHtml(String(item[schema.primary] || "")) + "</b><span>" + escapeHtml(schema.secondary(item)) + "</span></div>" +
+          (list.length > 1
+            ? '<span class="drag-handle">' + GRIP_ICON + "</span>"
+            : "") +
+          '<div class="info"><b>' +
+          escapeHtml(String(item[schema.primary] || "")) +
+          "</b><span>" +
+          escapeHtml(schema.secondary(item)) +
+          "</span></div>" +
           '<div class="actions">' +
-            (list.length > 1
-              ? '<div class="reorder-btns">' +
-                  '<button class="icon-btn" data-act="up" ' + (i === 0 ? "disabled" : "") + ">" + UP_ICON + "</button>" +
-                  '<button class="icon-btn" data-act="down" ' + (i === list.length - 1 ? "disabled" : "") + ">" + DOWN_ICON + "</button>" +
-                "</div>"
-              : "") +
-            '<button class="icon-btn" data-act="edit">' + EDIT_ICON + "</button>" +
-            '<button class="icon-btn danger" data-act="delete">' + TRASH_ICON + "</button>" +
+          (list.length > 1
+            ? '<div class="reorder-btns">' +
+              '<button class="icon-btn" data-act="up" ' +
+              (i === 0 ? "disabled" : "") +
+              ">" +
+              UP_ICON +
+              "</button>" +
+              '<button class="icon-btn" data-act="down" ' +
+              (i === list.length - 1 ? "disabled" : "") +
+              ">" +
+              DOWN_ICON +
+              "</button>" +
+              "</div>"
+            : "") +
+          '<button class="icon-btn" data-act="edit">' +
+          EDIT_ICON +
+          "</button>" +
+          '<button class="icon-btn danger" data-act="delete">' +
+          TRASH_ICON +
+          "</button>" +
           "</div>";
 
-        row.addEventListener("dragstart", () => { dragIndex = i; closeForm(); row.style.opacity = "0.4"; });
+        row.addEventListener("dragstart", () => {
+          dragIndex = i;
+          closeForm();
+          row.style.opacity = "0.4";
+        });
         row.addEventListener("dragenter", () => {
           if (dragIndex === null || dragIndex === i) return;
           const next = items().slice();
@@ -373,19 +616,33 @@
           render();
         });
         row.addEventListener("dragover", (e) => e.preventDefault());
-        row.addEventListener("dragend", () => { persist(data); dragIndex = null; render(); });
-
-        row.querySelector('[data-act="edit"]').addEventListener("click", () => openForm(i));
-        row.querySelector('[data-act="delete"]').addEventListener("click", () => {
-          if (!confirm("Delete this entry? This can't be undone.")) return;
-          setItems(items().filter((_, idx) => idx !== i));
+        row.addEventListener("dragend", () => {
+          persist(data);
+          dragIndex = null;
           render();
-          toast("Deleted");
         });
+
+        row
+          .querySelector('[data-act="edit"]')
+          .addEventListener("click", () => openForm(i));
+        row
+          .querySelector('[data-act="delete"]')
+          .addEventListener("click", () => {
+            if (!confirm("Delete this entry? This can't be undone.")) return;
+            setItems(items().filter((_, idx) => idx !== i));
+            render();
+            toast("Deleted");
+          });
         const upBtn = row.querySelector('[data-act="up"]');
-        if (upBtn) upBtn.addEventListener("click", () => { moveItem(i, -1); });
+        if (upBtn)
+          upBtn.addEventListener("click", () => {
+            moveItem(i, -1);
+          });
         const downBtn = row.querySelector('[data-act="down"]');
-        if (downBtn) downBtn.addEventListener("click", () => { moveItem(i, 1); });
+        if (downBtn)
+          downBtn.addEventListener("click", () => {
+            moveItem(i, 1);
+          });
 
         container.appendChild(row);
       });
@@ -416,7 +673,8 @@
       const draft = {};
       schema.fields.forEach((f) => {
         if (f.type === "images") draft[f.key] = (existing[f.key] || []).slice();
-        else if (f.type === "select") draft[f.key] = existing[f.key] || f.options[0];
+        else if (f.type === "select")
+          draft[f.key] = existing[f.key] || f.options[0];
         else draft[f.key] = existing[f.key] || "";
       });
 
@@ -424,47 +682,86 @@
       const card = document.createElement("div");
       card.className = "admin-form-card";
       const heading = document.createElement("h3");
-      heading.style.fontSize = "16px"; heading.style.marginBottom = "14px";
-      heading.textContent = (isEdit ? "Edit " : "New ") + schema.title.toLowerCase();
+      heading.style.fontSize = "16px";
+      heading.style.marginBottom = "14px";
+      heading.textContent =
+        (isEdit ? "Edit " : "New ") + schema.title.toLowerCase();
       card.appendChild(heading);
 
       schema.fields.forEach((f) => {
         const wrap = document.createElement("div");
         if (f.type === "textarea") {
           wrap.className = "field";
-          wrap.innerHTML = "<label>" + f.label + "</label><textarea></textarea>";
+          wrap.innerHTML =
+            "<label>" + f.label + "</label><textarea></textarea>";
           wrap.querySelector("textarea").value = draft[f.key];
-          wrap.querySelector("textarea").addEventListener("input", (e) => (draft[f.key] = e.target.value));
+          wrap
+            .querySelector("textarea")
+            .addEventListener("input", (e) => (draft[f.key] = e.target.value));
         } else if (f.type === "select") {
           wrap.className = "field";
-          wrap.innerHTML = "<label>" + f.label + "</label><select>" + f.options.map((o) => '<option value="' + o + '"' + (o === draft[f.key] ? " selected" : "") + ">" + o + "</option>").join("") + "</select>";
-          wrap.querySelector("select").addEventListener("change", (e) => (draft[f.key] = e.target.value));
+          wrap.innerHTML =
+            "<label>" +
+            f.label +
+            "</label><select>" +
+            f.options
+              .map(
+                (o) =>
+                  '<option value="' +
+                  o +
+                  '"' +
+                  (o === draft[f.key] ? " selected" : "") +
+                  ">" +
+                  o +
+                  "</option>",
+              )
+              .join("") +
+            "</select>";
+          wrap
+            .querySelector("select")
+            .addEventListener("change", (e) => (draft[f.key] = e.target.value));
         } else if (f.type === "image") {
-          const updateImage = (val) => { draft[f.key] = val; renderImageField(wrap, f.label, draft[f.key], updateImage, "wide"); };
+          const updateImage = (val) => {
+            draft[f.key] = val;
+            renderImageField(wrap, f.label, draft[f.key], updateImage, "wide");
+          };
           renderImageField(wrap, f.label, draft[f.key], updateImage, "wide");
         } else if (f.type === "images") {
-          const update = (vals) => { draft[f.key] = vals; renderMultiImageField(wrap, f.label, draft[f.key], update); };
+          const update = (vals) => {
+            draft[f.key] = vals;
+            renderMultiImageField(wrap, f.label, draft[f.key], update);
+          };
           renderMultiImageField(wrap, f.label, draft[f.key], update);
         } else {
           wrap.className = "field";
-          wrap.innerHTML = "<label>" + f.label + "</label><input type=\"text\">";
+          wrap.innerHTML = "<label>" + f.label + '</label><input type="text">';
           wrap.querySelector("input").value = draft[f.key];
-          wrap.querySelector("input").addEventListener("input", (e) => (draft[f.key] = e.target.value));
+          wrap
+            .querySelector("input")
+            .addEventListener("input", (e) => (draft[f.key] = e.target.value));
         }
         card.appendChild(wrap);
       });
 
       const errorP = document.createElement("p");
-      errorP.className = "field-error"; errorP.style.display = "none";
+      errorP.className = "field-error";
+      errorP.style.display = "none";
       card.appendChild(errorP);
 
       const actions = document.createElement("div");
       actions.className = "form-actions";
       const saveBtn = document.createElement("button");
-      saveBtn.className = "btn btn-sm"; saveBtn.textContent = "Save entry";
+      saveBtn.className = "btn btn-sm";
+      saveBtn.textContent = "Save entry";
       saveBtn.addEventListener("click", () => {
         for (const f of schema.fields) {
-          if (f.type === "select" || f.type === "image" || f.type === "images" || f.optional) continue;
+          if (
+            f.type === "select" ||
+            f.type === "image" ||
+            f.type === "images" ||
+            f.optional
+          )
+            continue;
           if (!String(draft[f.key] || "").trim()) {
             errorP.textContent = "Please fill in every field.";
             errorP.style.display = "block";
@@ -480,9 +777,11 @@
         toast(isEdit ? "Entry updated" : "Entry added");
       });
       const cancelBtn = document.createElement("button");
-      cancelBtn.className = "btn btn-sm btn-outline"; cancelBtn.textContent = "Cancel";
+      cancelBtn.className = "btn btn-sm btn-outline";
+      cancelBtn.textContent = "Cancel";
       cancelBtn.addEventListener("click", closeForm);
-      actions.appendChild(saveBtn); actions.appendChild(cancelBtn);
+      actions.appendChild(saveBtn);
+      actions.appendChild(cancelBtn);
       card.appendChild(actions);
 
       slot.appendChild(card);
@@ -495,8 +794,11 @@
 
   function attr(str) {
     return String(str == null ? "" : str)
-      .replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;")
-      .replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
   }
   function escapeHtml(str) {
     const div = document.createElement("div");
@@ -508,7 +810,8 @@
      THEME (shared toggle on the admin page too)
      ========================================================= */
   function updateThemeIcon() {
-    const isLight = document.documentElement.getAttribute("data-theme") === "light";
+    const isLight =
+      document.documentElement.getAttribute("data-theme") === "light";
     document.getElementById("themeIcon").innerHTML = isLight
       ? '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>'
       : '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/>';
@@ -527,10 +830,18 @@
     document.getElementById("f_hero_cta2_url").value = data.hero.cta2Url;
     const logoField = document.getElementById("field_logo");
     function refreshLogo() {
-      renderImageField(logoField, "Navigation logo (replaces the \u201cKS.\u201d mark)", data.brand.logoUrl, (val) => {
-        data.brand.logoUrl = val; persist(data); refreshLogo();
-        toast("Logo updated");
-      }, "wide");
+      renderImageField(
+        logoField,
+        "Navigation logo (replaces the \u201cKS.\u201d mark)",
+        data.brand.logoUrl,
+        (val) => {
+          data.brand.logoUrl = val;
+          persist(data);
+          refreshLogo();
+          toast("Logo updated");
+        },
+        "wide",
+      );
     }
     refreshLogo();
   }
@@ -541,23 +852,48 @@
     document.getElementById("f_about_tags").value = data.about.tags.join(", ");
     const photoField = document.getElementById("field_photo");
     function refreshPhoto() {
-      renderImageField(photoField, "Profile picture (shown instead of your initials when set)", data.about.photoUrl, (val) => {
-        data.about.photoUrl = val; persist(data); refreshPhoto();
-      }, "square");
+      renderImageField(
+        photoField,
+        "Profile picture (shown instead of your initials when set)",
+        data.about.photoUrl,
+        (val) => {
+          data.about.photoUrl = val;
+          persist(data);
+          refreshPhoto();
+        },
+        "square",
+      );
     }
     refreshPhoto();
     const resumeField = document.getElementById("field_resume");
     function refreshResume() {
-      renderFileField(resumeField, "Resume (adds a \u201cDownload resume\u201d button to the About section)", data.about.resumeUrl, data.about.resumeName, (url, name) => {
-        data.about.resumeUrl = url; data.about.resumeName = name; persist(data); refreshResume();
-      });
+      renderFileField(
+        resumeField,
+        "Resume (adds a \u201cDownload resume\u201d button to the About section)",
+        data.about.resumeUrl,
+        data.about.resumeName,
+        (url, name) => {
+          data.about.resumeUrl = url;
+          data.about.resumeName = name;
+          persist(data);
+          refreshResume();
+        },
+      );
     }
     refreshResume();
   }
 
   function switchTab(tabName) {
-    document.querySelectorAll(".admin-tab").forEach((t) => t.classList.toggle("active", t.getAttribute("data-tab") === tabName));
-    document.querySelectorAll(".admin-panel").forEach((p) => p.classList.toggle("active", p.getAttribute("data-panel") === tabName));
+    document
+      .querySelectorAll(".admin-tab")
+      .forEach((t) =>
+        t.classList.toggle("active", t.getAttribute("data-tab") === tabName),
+      );
+    document
+      .querySelectorAll(".admin-panel")
+      .forEach((p) =>
+        p.classList.toggle("active", p.getAttribute("data-panel") === tabName),
+      );
   }
 
   const editors = {};
@@ -565,15 +901,20 @@
   document.addEventListener("DOMContentLoaded", async () => {
     updateThemeIcon();
     document.getElementById("themeToggle").addEventListener("click", () => {
-      const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      const next =
+        document.documentElement.getAttribute("data-theme") === "dark"
+          ? "light"
+          : "dark";
       document.documentElement.setAttribute("data-theme", next);
       localStorage.setItem("ks_theme", next);
       updateThemeIcon();
     });
 
     if (!CONFIGURED) {
-      document.querySelector(".admin-login h2").textContent = "Supabase isn't configured yet";
-      document.querySelector(".admin-login p").textContent = "Open supabase-config.js and paste in your Project URL and anon key \u2014 see README.md \u2192 \"Setup\".";
+      document.querySelector(".admin-login h2").textContent =
+        "Supabase isn't configured yet";
+      document.querySelector(".admin-login p").textContent =
+        'Open supabase-config.js and paste in your Project URL and anon key \u2014 see README.md \u2192 "Setup".';
       document.getElementById("loginEmail").disabled = true;
       document.getElementById("pw").disabled = true;
       document.getElementById("loginBtn").disabled = true;
@@ -592,11 +933,14 @@
         document.getElementById("loginError").style.display = "none";
         showDashboard();
       } else {
-        document.getElementById("loginError").textContent = result.error || "Incorrect email or password.";
+        document.getElementById("loginError").textContent =
+          result.error || "Incorrect email or password.";
         document.getElementById("loginError").style.display = "block";
       }
     });
-    document.getElementById("pw").addEventListener("keydown", (e) => { if (e.key === "Enter") document.getElementById("loginBtn").click(); });
+    document.getElementById("pw").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("loginBtn").click();
+    });
     document.getElementById("logoutBtn").addEventListener("click", async () => {
       await signOut();
       location.reload();
@@ -608,92 +952,177 @@
       document.getElementById("logoutBtn").style.display = "inline-flex";
       data = await loadData();
 
-      editors.skills = Object.assign(createListEditor("skills", "skillsAdminList"), { containerId: "skillsAdminList" });
-      editors.experience = Object.assign(createListEditor("experience", "experienceAdminList"), { containerId: "experienceAdminList" });
-      editors.education = Object.assign(createListEditor("education", "educationAdminList"), { containerId: "educationAdminList" });
-      editors.projects = Object.assign(createListEditor("projects", "projectsAdminList"), { containerId: "projectsAdminList" });
-      editors.achievements = Object.assign(createListEditor("achievements", "achievementsAdminList"), { containerId: "achievementsAdminList" });
-      editors.socials = Object.assign(createListEditor("socials", "socialsAdminList"), { containerId: "socialsAdminList" });
+      editors.skills = Object.assign(
+        createListEditor("skills", "skillsAdminList"),
+        { containerId: "skillsAdminList" },
+      );
+      editors.experience = Object.assign(
+        createListEditor("experience", "experienceAdminList"),
+        { containerId: "experienceAdminList" },
+      );
+      editors.education = Object.assign(
+        createListEditor("education", "educationAdminList"),
+        { containerId: "educationAdminList" },
+      );
+      editors.projects = Object.assign(
+        createListEditor("projects", "projectsAdminList"),
+        { containerId: "projectsAdminList" },
+      );
+      editors.achievements = Object.assign(
+        createListEditor("achievements", "achievementsAdminList"),
+        { containerId: "achievementsAdminList" },
+      );
+      editors.socials = Object.assign(
+        createListEditor("socials", "socialsAdminList"),
+        { containerId: "socialsAdminList" },
+      );
 
       fillHeroForm();
       fillAboutForm();
 
-      document.querySelectorAll(".admin-tab").forEach((tab) => tab.addEventListener("click", () => switchTab(tab.getAttribute("data-tab"))));
-      document.getElementById("saveLogoBtn").addEventListener("click", async () => {
-        toast((await persist(data)) ? "Logo saved" : "Save failed");
-      });
-      document.getElementById("saveHeroBtn").addEventListener("click", async () => {
-        data.hero = {
-          name: document.getElementById("f_hero_name").value.trim() || DEFAULT_DATA.hero.name,
-          role: document.getElementById("f_hero_role").value.trim(),
-          tagline: document.getElementById("f_hero_tagline").value.trim(),
-          cta1Label: document.getElementById("f_hero_cta1_label").value.trim() || "View my work",
-          cta1Url: document.getElementById("f_hero_cta1_url").value.trim() || "#experience",
-          cta2Label: document.getElementById("f_hero_cta2_label").value.trim() || "Get in touch",
-          cta2Url: document.getElementById("f_hero_cta2_url").value.trim() || "#contact"
-        };
-        toast((await persist(data)) ? "Hero section saved" : "Save failed");
-      });
-      document.getElementById("saveAboutBtn").addEventListener("click", async () => {
-        data.about.initials = document.getElementById("f_about_initials").value.trim() || "KS";
-        data.about.bio = document.getElementById("f_about_bio").value.trim();
-        data.about.tags = document.getElementById("f_about_tags").value.split(",").map((t) => t.trim()).filter(Boolean);
-        toast((await persist(data)) ? "About section saved" : "Save failed");
-      });
+      document
+        .querySelectorAll(".admin-tab")
+        .forEach((tab) =>
+          tab.addEventListener("click", () =>
+            switchTab(tab.getAttribute("data-tab")),
+          ),
+        );
+      document
+        .getElementById("saveLogoBtn")
+        .addEventListener("click", async () => {
+          toast((await persist(data)) ? "Logo saved" : "Save failed");
+        });
+      document
+        .getElementById("saveHeroBtn")
+        .addEventListener("click", async () => {
+          data.hero = {
+            name:
+              document.getElementById("f_hero_name").value.trim() ||
+              DEFAULT_DATA.hero.name,
+            role: document.getElementById("f_hero_role").value.trim(),
+            tagline: document.getElementById("f_hero_tagline").value.trim(),
+            cta1Label:
+              document.getElementById("f_hero_cta1_label").value.trim() ||
+              "View my work",
+            cta1Url:
+              document.getElementById("f_hero_cta1_url").value.trim() ||
+              "#experience",
+            cta2Label:
+              document.getElementById("f_hero_cta2_label").value.trim() ||
+              "Get in touch",
+            cta2Url:
+              document.getElementById("f_hero_cta2_url").value.trim() ||
+              "#contact",
+          };
+          toast((await persist(data)) ? "Hero section saved" : "Save failed");
+        });
+      document
+        .getElementById("saveAboutBtn")
+        .addEventListener("click", async () => {
+          data.about.initials =
+            document.getElementById("f_about_initials").value.trim() || "KS";
+          data.about.bio = document.getElementById("f_about_bio").value.trim();
+          data.about.tags = document
+            .getElementById("f_about_tags")
+            .value.split(",")
+            .map((t) => t.trim())
+            .filter(Boolean);
+          toast((await persist(data)) ? "About section saved" : "Save failed");
+        });
 
-      document.getElementById("addSkillBtn").addEventListener("click", () => editors.skills.openForm());
-      document.getElementById("addExperienceBtn").addEventListener("click", () => editors.experience.openForm());
-      document.getElementById("addEducationBtn").addEventListener("click", () => editors.education.openForm());
-      document.getElementById("addProjectBtn").addEventListener("click", () => editors.projects.openForm());
-      document.getElementById("addAchievementBtn").addEventListener("click", () => editors.achievements.openForm());
-      document.getElementById("addSocialBtn").addEventListener("click", () => editors.socials.openForm());
+      document
+        .getElementById("addSkillBtn")
+        .addEventListener("click", () => editors.skills.openForm());
+      document
+        .getElementById("addExperienceBtn")
+        .addEventListener("click", () => editors.experience.openForm());
+      document
+        .getElementById("addEducationBtn")
+        .addEventListener("click", () => editors.education.openForm());
+      document
+        .getElementById("addProjectBtn")
+        .addEventListener("click", () => editors.projects.openForm());
+      document
+        .getElementById("addAchievementBtn")
+        .addEventListener("click", () => editors.achievements.openForm());
+      document
+        .getElementById("addSocialBtn")
+        .addEventListener("click", () => editors.socials.openForm());
 
-      document.getElementById("changePassBtn").addEventListener("click", async () => {
-        const val = document.getElementById("f_new_pass").value;
-        if (!val || val.length < 6) { toast("Password must be at least 6 characters"); return; }
-        const result = await changePassword(val);
-        if (result.ok) {
-          document.getElementById("f_new_pass").value = "";
-          toast("Password updated");
-        } else {
-          toast(result.error || "Could not update password");
-        }
-      });
+      document
+        .getElementById("changePassBtn")
+        .addEventListener("click", async () => {
+          const val = document.getElementById("f_new_pass").value;
+          if (!val || val.length < 6) {
+            toast("Password must be at least 6 characters");
+            return;
+          }
+          const result = await changePassword(val);
+          if (result.ok) {
+            document.getElementById("f_new_pass").value = "";
+            toast("Password updated");
+          } else {
+            toast(result.error || "Could not update password");
+          }
+        });
       document.getElementById("exportDataBtn").addEventListener("click", () => {
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
+        });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = url; a.download = "site-data.json"; a.click();
+        a.href = url;
+        a.download = "site-data.json";
+        a.click();
         URL.revokeObjectURL(url);
         toast("site-data.json downloaded");
       });
-      document.getElementById("importDataInput").addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = async () => {
-          try {
-            data = normalize(JSON.parse(String(reader.result)));
-          } catch (err) {
-            toast("That file isn't valid JSON");
+      document
+        .getElementById("importDataInput")
+        .addEventListener("change", (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = async () => {
+            try {
+              data = normalize(JSON.parse(String(reader.result)));
+            } catch (err) {
+              toast("That file isn't valid JSON");
+              return;
+            }
+            const ok = await persist(data);
+            fillHeroForm();
+            fillAboutForm();
+            Object.keys(editors).forEach((t) => editors[t].render());
+            toast(
+              ok
+                ? "Data imported successfully"
+                : "Import shown here but saving to Supabase failed",
+            );
+          };
+          reader.readAsText(file);
+          e.target.value = "";
+        });
+      document
+        .getElementById("resetDataBtn")
+        .addEventListener("click", async () => {
+          if (
+            !confirm(
+              "Reset all content back to the default placeholders? This can't be undone.",
+            )
+          )
             return;
-          }
+          data = JSON.parse(JSON.stringify(DEFAULT_DATA));
           const ok = await persist(data);
-          fillHeroForm(); fillAboutForm();
+          fillHeroForm();
+          fillAboutForm();
           Object.keys(editors).forEach((t) => editors[t].render());
-          toast(ok ? "Data imported successfully" : "Import shown here but saving to Supabase failed");
-        };
-        reader.readAsText(file);
-        e.target.value = "";
-      });
-      document.getElementById("resetDataBtn").addEventListener("click", async () => {
-        if (!confirm("Reset all content back to the default placeholders? This can't be undone.")) return;
-        data = JSON.parse(JSON.stringify(DEFAULT_DATA));
-        const ok = await persist(data);
-        fillHeroForm(); fillAboutForm();
-        Object.keys(editors).forEach((t) => editors[t].render());
-        toast(ok ? "Reset to defaults" : "Reset shown here but saving to Supabase failed");
-      });
+          toast(
+            ok
+              ? "Reset to defaults"
+              : "Reset shown here but saving to Supabase failed",
+          );
+        });
     }
   });
 })();
