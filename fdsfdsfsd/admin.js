@@ -1,10 +1,8 @@
 (function () {
   "use strict";
 
-  const STORAGE_DATA_KEY = "ks_portfolio_data";
-  const STORAGE_PASS_HASH_KEY = "ks_admin_pass_hash";
-  const SESSION_UNLOCKED_KEY = "ks_admin_unlocked";
-  const DEFAULT_PASSWORD = "djsahdsahdasjdiasjdsiajdias";
+  const CONFIGURED = window.SUPABASE_URL && !window.SUPABASE_URL.includes("YOUR-PROJECT-REF");
+  const supabaseClient = CONFIGURED ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY) : null;
 
   const DEFAULT_DATA = {
     brand: { logoUrl: "" },
@@ -37,16 +35,31 @@
       socials: Array.isArray(d.socials) ? d.socials : []
     });
   }
-  function loadData() {
+  async function loadData() {
     try {
-      const raw = localStorage.getItem(STORAGE_DATA_KEY);
-      if (raw) return normalize(JSON.parse(raw));
-    } catch (e) {}
-    return JSON.parse(JSON.stringify(DEFAULT_DATA));
+      const { data: row, error } = await supabaseClient.from("site_content").select("data").eq("id", 1).single();
+      if (error) throw error;
+      return normalize(row && row.data ? row.data : {});
+    } catch (e) {
+      console.error("[admin] Could not load content from Supabase:", e);
+      toast("Could not load content — check the browser console");
+      return JSON.parse(JSON.stringify(DEFAULT_DATA));
+    }
   }
-  function persist(d) { localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(d)); }
+  async function persist(d) {
+    const { error } = await supabaseClient
+      .from("site_content")
+      .update({ data: d, updated_at: new Date().toISOString() })
+      .eq("id", 1);
+    if (error) {
+      console.error("[admin] Save failed:", error);
+      toast("Save failed — check the browser console");
+      return false;
+    }
+    return true;
+  }
 
-  let data = loadData();
+  let data = JSON.parse(JSON.stringify(DEFAULT_DATA));
   function uid() { return "id_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
   /* ---------- ICONS ---------- */
@@ -59,20 +72,20 @@
   const CHEV_RIGHT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>';
   const PLUS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>';
 
-  /* ---------- AUTH (hash-based, client-side only — see admin.html's note) ---------- */
-  async function sha256(text) {
-    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-    return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  /* ---------- AUTH (real, server-verified — Supabase Auth) ---------- */
+  async function signIn(email, pw) {
+    const { data: result, error } = await supabaseClient.auth.signInWithPassword({ email, password: pw });
+    return { ok: !error && !!(result && result.session), error: error ? error.message : null };
   }
-  async function ensurePasswordHash() {
-    if (!localStorage.getItem(STORAGE_PASS_HASH_KEY)) {
-      localStorage.setItem(STORAGE_PASS_HASH_KEY, await sha256(DEFAULT_PASSWORD));
-    }
+  async function signOut() { await supabaseClient.auth.signOut(); }
+  async function getSession() {
+    const { data: result } = await supabaseClient.auth.getSession();
+    return result.session;
   }
-  async function checkPassword(pw) {
-    return (await sha256(pw)) === localStorage.getItem(STORAGE_PASS_HASH_KEY);
+  async function changePassword(newPw) {
+    const { error } = await supabaseClient.auth.updateUser({ password: newPw });
+    return { ok: !error, error: error ? error.message : null };
   }
-  async function setPassword(pw) { localStorage.setItem(STORAGE_PASS_HASH_KEY, await sha256(pw)); }
 
   /* ---------- TOAST ---------- */
   let toastTimer = null;
@@ -84,29 +97,32 @@
     toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
   }
 
-  /* ---------- FILE -> DATA URI ---------- */
+  /* ---------- FILE -> Supabase Storage upload ---------- */
   const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
   const DOC_TYPES = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
-  const MAX_IMAGE_BYTES = 1.5 * 1024 * 1024;
-  const MAX_DOC_BYTES = 3 * 1024 * 1024;
+  const EXT_BY_TYPE = {
+    "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif",
+    "application/pdf": "pdf", "application/msword": "doc",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx"
+  };
+  const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+  const MAX_DOC_BYTES = 10 * 1024 * 1024;
+  const BUCKET = "portfolio-uploads";
 
-  function readFileAsDataUri(file, kind) {
-    return new Promise((resolve, reject) => {
-      const allowed = kind === "document" ? DOC_TYPES : IMAGE_TYPES;
-      const maxBytes = kind === "document" ? MAX_DOC_BYTES : MAX_IMAGE_BYTES;
-      if (allowed.indexOf(file.type) === -1) {
-        reject(kind === "document" ? "Only PDF, DOC or DOCX files are allowed" : "Only PNG, JPEG, WEBP or GIF images are allowed");
-        return;
-      }
-      if (file.size > maxBytes) {
-        reject("File must be " + (maxBytes / (1024 * 1024)).toFixed(1) + "MB or smaller (this is saved in your browser's storage, which has limited room)");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = () => resolve({ url: String(reader.result), name: file.name });
-      reader.onerror = () => reject("Could not read that file");
-      reader.readAsDataURL(file);
-    });
+  async function uploadFile(file, kind) {
+    const allowed = kind === "document" ? DOC_TYPES : IMAGE_TYPES;
+    const maxBytes = kind === "document" ? MAX_DOC_BYTES : MAX_IMAGE_BYTES;
+    if (allowed.indexOf(file.type) === -1) {
+      throw kind === "document" ? "Only PDF, DOC or DOCX files are allowed" : "Only PNG, JPEG, WEBP or GIF images are allowed";
+    }
+    if (file.size > maxBytes) {
+      throw "File must be " + (maxBytes / (1024 * 1024)).toFixed(0) + "MB or smaller";
+    }
+    const path = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8) + "." + EXT_BY_TYPE[file.type];
+    const { error } = await supabaseClient.storage.from(BUCKET).upload(path, file, { contentType: file.type, upsert: false });
+    if (error) throw "Upload failed: " + error.message;
+    const { data: pub } = supabaseClient.storage.from(BUCKET).getPublicUrl(path);
+    return { url: pub.publicUrl, name: file.name };
   }
 
   /* =========================================================
@@ -117,15 +133,15 @@
     container.innerHTML =
       '<label>' + label + "</label>" +
       '<div class="image-upload image-upload-' + (shape || "square") + '">' +
-        '<div class="image-upload-preview">' + (value ? '<img src="' + value + '" alt="">' : '<span class="image-upload-empty">No image</span>') + "</div>" +
+        '<div class="image-upload-preview">' + (value ? '<img src="' + attr(value) + '" alt="">' : '<span class="image-upload-empty">No image</span>') + "</div>" +
         '<div class="image-upload-actions">' +
           '<button type="button" class="btn btn-sm btn-outline" data-act="upload">' + (value ? "Replace image" : "Upload image") + "</button>" +
           (value ? '<button type="button" class="btn btn-sm btn-outline" data-act="remove">Remove</button>' : "") +
-          '<input type="text" class="image-upload-url" data-act="url" placeholder="...or paste an image URL" value="' + (value && !value.startsWith("data:") ? value.replace(/"/g, "&quot;") : "") + '">' +
+          '<input type="text" class="image-upload-url" data-act="url" placeholder="...or paste an image URL" value="' + (value && !value.startsWith("data:") ? attr(value) : "") + '">' +
         "</div>" +
         '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;" data-act="file">' +
       "</div>" +
-      '<p class="hint">Upload (PNG/JPEG/WEBP/GIF, up to 1.5MB) or paste a URL instead.</p>';
+      '<p class="hint">Upload (PNG/JPEG/WEBP/GIF, up to 5MB) or paste a URL instead.</p>';
 
     const fileInput = container.querySelector('[data-act="file"]');
     container.querySelector('[data-act="upload"]').addEventListener("click", () => fileInput.click());
@@ -133,7 +149,7 @@
       const file = e.target.files[0];
       if (!file) return;
       try {
-        const result = await readFileAsDataUri(file, "image");
+        const result = await uploadFile(file, "image");
         onChange(result.url);
       } catch (err) {
         toast(typeof err === "string" ? err : "Upload failed");
@@ -156,7 +172,7 @@
       '<div class="multi-image-field">' +
         values.map((url, i) =>
           '<div class="multi-image-thumb" data-idx="' + i + '">' +
-            '<img src="' + url + '" alt="">' +
+            '<img src="' + attr(url) + '" alt="">' +
             '<button type="button" class="thumb-remove" data-act="remove" data-idx="' + i + '" aria-label="Remove image">' + TRASH_ICON + "</button>" +
             (values.length > 1
               ? '<div class="thumb-move">' +
@@ -169,7 +185,7 @@
         '<button type="button" class="multi-image-add" data-act="add">' + PLUS_ICON + "<span>Add image</span></button>" +
         '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;" data-act="file">' +
       "</div>" +
-      '<p class="hint">First image is the cover. Upload (up to 1.5MB each) or add several — order sets the carousel order.</p>';
+      '<p class="hint">First image is the cover. Upload (up to 5MB each) or add several — order sets the carousel order.</p>';
 
     const fileInput = container.querySelector('[data-act="file"]');
     container.querySelector('[data-act="add"]').addEventListener("click", () => fileInput.click());
@@ -177,7 +193,7 @@
       const file = e.target.files[0];
       if (!file) return;
       try {
-        const result = await readFileAsDataUri(file, "image");
+        const result = await uploadFile(file, "image");
         onChange(values.concat([result.url]));
       } catch (err) {
         toast(typeof err === "string" ? err : "Upload failed");
@@ -216,7 +232,7 @@
       '<label>' + label + "</label>" +
       '<div class="file-upload">' +
         '<div class="file-upload-status">' +
-          (value ? '<a href="' + value + '" target="_blank" rel="noopener noreferrer" class="file-upload-name">' + (fileName || "Current file") + "</a>" : '<span class="file-upload-empty">No file uploaded</span>') +
+          (value ? '<a href="' + attr(value) + '" target="_blank" rel="noopener noreferrer" class="file-upload-name">' + escapeHtml(fileName || "Current file") + "</a>" : '<span class="file-upload-empty">No file uploaded</span>') +
         "</div>" +
         '<div class="image-upload-actions">' +
           '<button type="button" class="btn btn-sm btn-outline" data-act="upload">' + (value ? "Replace file" : "Upload file") + "</button>" +
@@ -224,7 +240,7 @@
         "</div>" +
         '<input type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none;" data-act="file">' +
       "</div>" +
-      '<p class="hint">PDF, DOC or DOCX, up to 3MB. Leave empty to hide the download button on the site.</p>';
+      '<p class="hint">PDF, DOC or DOCX, up to 10MB. Leave empty to hide the download button on the site.</p>';
 
     const fileInput = container.querySelector('[data-act="file"]');
     container.querySelector('[data-act="upload"]').addEventListener("click", () => fileInput.click());
@@ -232,7 +248,7 @@
       const file = e.target.files[0];
       if (!file) return;
       try {
-        const result = await readFileAsDataUri(file, "document");
+        const result = await uploadFile(file, "document");
         onChange(result.url, result.name);
       } catch (err) {
         toast(typeof err === "string" ? err : "Upload failed");
@@ -477,6 +493,11 @@
     return { render, openForm };
   }
 
+  function attr(str) {
+    return String(str == null ? "" : str)
+      .replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;")
+      .replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
   function escapeHtml(str) {
     const div = document.createElement("div");
     div.textContent = str;
@@ -542,7 +563,6 @@
   const editors = {};
 
   document.addEventListener("DOMContentLoaded", async () => {
-    await ensurePasswordHash();
     updateThemeIcon();
     document.getElementById("themeToggle").addEventListener("click", () => {
       const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
@@ -551,30 +571,42 @@
       updateThemeIcon();
     });
 
-    const unlocked = sessionStorage.getItem(SESSION_UNLOCKED_KEY) === "1";
-    if (unlocked) showDashboard();
+    if (!CONFIGURED) {
+      document.querySelector(".admin-login h2").textContent = "Supabase isn't configured yet";
+      document.querySelector(".admin-login p").textContent = "Open supabase-config.js and paste in your Project URL and anon key \u2014 see README.md \u2192 \"Setup\".";
+      document.getElementById("loginEmail").disabled = true;
+      document.getElementById("pw").disabled = true;
+      document.getElementById("loginBtn").disabled = true;
+      return;
+    }
+
+    const session = await getSession();
+    if (session) showDashboard();
 
     document.getElementById("loginBtn").addEventListener("click", async () => {
+      const email = document.getElementById("loginEmail").value.trim();
       const pw = document.getElementById("pw").value;
-      if (await checkPassword(pw)) {
-        sessionStorage.setItem(SESSION_UNLOCKED_KEY, "1");
+      const result = await signIn(email, pw);
+      if (result.ok) {
         document.getElementById("pw").value = "";
+        document.getElementById("loginError").style.display = "none";
         showDashboard();
       } else {
+        document.getElementById("loginError").textContent = result.error || "Incorrect email or password.";
         document.getElementById("loginError").style.display = "block";
       }
     });
     document.getElementById("pw").addEventListener("keydown", (e) => { if (e.key === "Enter") document.getElementById("loginBtn").click(); });
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      sessionStorage.removeItem(SESSION_UNLOCKED_KEY);
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await signOut();
       location.reload();
     });
 
-    function showDashboard() {
+    async function showDashboard() {
       document.getElementById("loginView").style.display = "none";
       document.getElementById("dashboardView").style.display = "block";
       document.getElementById("logoutBtn").style.display = "inline-flex";
-      data = loadData();
+      data = await loadData();
 
       editors.skills = Object.assign(createListEditor("skills", "skillsAdminList"), { containerId: "skillsAdminList" });
       editors.experience = Object.assign(createListEditor("experience", "experienceAdminList"), { containerId: "experienceAdminList" });
@@ -587,8 +619,10 @@
       fillAboutForm();
 
       document.querySelectorAll(".admin-tab").forEach((tab) => tab.addEventListener("click", () => switchTab(tab.getAttribute("data-tab"))));
-      document.getElementById("saveLogoBtn").addEventListener("click", () => { persist(data); toast("Logo saved"); });
-      document.getElementById("saveHeroBtn").addEventListener("click", () => {
+      document.getElementById("saveLogoBtn").addEventListener("click", async () => {
+        toast((await persist(data)) ? "Logo saved" : "Save failed");
+      });
+      document.getElementById("saveHeroBtn").addEventListener("click", async () => {
         data.hero = {
           name: document.getElementById("f_hero_name").value.trim() || DEFAULT_DATA.hero.name,
           role: document.getElementById("f_hero_role").value.trim(),
@@ -598,15 +632,13 @@
           cta2Label: document.getElementById("f_hero_cta2_label").value.trim() || "Get in touch",
           cta2Url: document.getElementById("f_hero_cta2_url").value.trim() || "#contact"
         };
-        persist(data);
-        toast("Hero section saved");
+        toast((await persist(data)) ? "Hero section saved" : "Save failed");
       });
-      document.getElementById("saveAboutBtn").addEventListener("click", () => {
+      document.getElementById("saveAboutBtn").addEventListener("click", async () => {
         data.about.initials = document.getElementById("f_about_initials").value.trim() || "KS";
         data.about.bio = document.getElementById("f_about_bio").value.trim();
         data.about.tags = document.getElementById("f_about_tags").value.split(",").map((t) => t.trim()).filter(Boolean);
-        persist(data);
-        toast("About section saved");
+        toast((await persist(data)) ? "About section saved" : "Save failed");
       });
 
       document.getElementById("addSkillBtn").addEventListener("click", () => editors.skills.openForm());
@@ -618,10 +650,14 @@
 
       document.getElementById("changePassBtn").addEventListener("click", async () => {
         const val = document.getElementById("f_new_pass").value;
-        if (!val || val.length < 4) { toast("Password must be at least 4 characters"); return; }
-        await setPassword(val);
-        document.getElementById("f_new_pass").value = "";
-        toast("Password updated");
+        if (!val || val.length < 6) { toast("Password must be at least 6 characters"); return; }
+        const result = await changePassword(val);
+        if (result.ok) {
+          document.getElementById("f_new_pass").value = "";
+          toast("Password updated");
+        } else {
+          toast(result.error || "Could not update password");
+        }
       });
       document.getElementById("exportDataBtn").addEventListener("click", () => {
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -635,25 +671,28 @@
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = () => {
+        reader.onload = async () => {
           try {
             data = normalize(JSON.parse(String(reader.result)));
-            persist(data);
-            fillHeroForm(); fillAboutForm();
-            Object.keys(editors).forEach((t) => editors[t].render());
-            toast("Data imported successfully");
-          } catch (err) { toast("That file isn't valid JSON"); }
+          } catch (err) {
+            toast("That file isn't valid JSON");
+            return;
+          }
+          const ok = await persist(data);
+          fillHeroForm(); fillAboutForm();
+          Object.keys(editors).forEach((t) => editors[t].render());
+          toast(ok ? "Data imported successfully" : "Import shown here but saving to Supabase failed");
         };
         reader.readAsText(file);
         e.target.value = "";
       });
-      document.getElementById("resetDataBtn").addEventListener("click", () => {
+      document.getElementById("resetDataBtn").addEventListener("click", async () => {
         if (!confirm("Reset all content back to the default placeholders? This can't be undone.")) return;
         data = JSON.parse(JSON.stringify(DEFAULT_DATA));
-        persist(data);
+        const ok = await persist(data);
         fillHeroForm(); fillAboutForm();
         Object.keys(editors).forEach((t) => editors[t].render());
-        toast("Reset to defaults");
+        toast(ok ? "Reset to defaults" : "Reset shown here but saving to Supabase failed");
       });
     }
   });
