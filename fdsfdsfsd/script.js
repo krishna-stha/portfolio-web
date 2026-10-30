@@ -17,8 +17,10 @@
   const CHEV_RIGHT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>';
   const EXPAND_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></svg>';
 
-  const STORAGE_DATA_KEY = "ks_portfolio_data";
-  const STORAGE_THEME_KEY = "ks_theme";
+  const STORAGE_THEME_KEY = "ks_theme"; // theme preference only — content now lives in Supabase
+
+  const CONFIGURED = window.SUPABASE_URL && !window.SUPABASE_URL.includes("YOUR-PROJECT-REF");
+  const supabaseClient = CONFIGURED ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY) : null;
 
   const DEFAULT_DATA = {
     brand: { logoUrl: "" },
@@ -37,12 +39,19 @@
     skills: [], experience: [], education: [], projects: [], achievements: [], socials: []
   };
 
-  function loadData() {
+  async function fetchData() {
+    if (!CONFIGURED) {
+      console.warn("[portfolio] supabase-config.js hasn't been filled in yet — showing placeholder content. See README.md \u2192 \"Setup\".");
+      return JSON.parse(JSON.stringify(DEFAULT_DATA));
+    }
     try {
-      const raw = localStorage.getItem(STORAGE_DATA_KEY);
-      if (raw) return normalize(JSON.parse(raw));
-    } catch (e) {}
-    return JSON.parse(JSON.stringify(DEFAULT_DATA));
+      const { data: row, error } = await supabaseClient.from("site_content").select("data").eq("id", 1).single();
+      if (error) throw error;
+      return normalize(row && row.data ? row.data : {});
+    } catch (e) {
+      console.error("[portfolio] Could not load content from Supabase, showing placeholder content:", e);
+      return JSON.parse(JSON.stringify(DEFAULT_DATA));
+    }
   }
   function normalize(d) {
     const base = JSON.parse(JSON.stringify(DEFAULT_DATA));
@@ -67,11 +76,16 @@
     return Object.assign({ credentialUrl: "" }, a, { imageUrls: imageUrls });
   }
 
-  let data = loadData();
+  let data = JSON.parse(JSON.stringify(DEFAULT_DATA));
   function esc(str) {
     const div = document.createElement("div");
     div.textContent = str == null ? "" : String(str);
     return div.innerHTML;
+  }
+  function attr(str) {
+    return String(str == null ? "" : str)
+      .replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;")
+      .replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
   function safeHref(url) {
     if (!url) return "";
@@ -142,7 +156,7 @@
      ========================================================= */
   function render() {
     if (data.brand.logoUrl) {
-      document.getElementById("navLogo").innerHTML = '<img src="' + data.brand.logoUrl + '" alt="Logo" class="nav-logo-img">';
+      document.getElementById("navLogo").innerHTML = '<img src="' + attr(data.brand.logoUrl) + '" alt="Logo" class="nav-logo-img">';
     } else {
       document.getElementById("navLogo").innerHTML = '<span class="dot"></span>KS.';
     }
@@ -192,7 +206,7 @@
     renderAchievements();
 
     document.getElementById("socialsList").innerHTML = data.socials.length
-      ? data.socials.map((i) => '<a class="social-item" href="' + esc(safeHref(i.url)) + '" target="_blank" rel="noopener noreferrer"><span class="s-label">' +
+      ? data.socials.map((i) => '<a class="social-item" href="' + attr(safeHref(i.url)) + '" target="_blank" rel="noopener noreferrer"><span class="s-label">' +
           esc(i.label) + "</span>" + (ICONS[i.icon] || ICONS.link) + "</a>").join("")
       : '<p class="empty-state">Add your social links from the admin panel.</p>';
 
@@ -220,7 +234,7 @@
         carouselHtml =
           '<div class="project-carousel" data-project="' + idx + '">' +
             '<div class="project-carousel-track">' +
-              imgs.map((src) => '<div class="project-carousel-slide"><img src="' + src + '" alt="' + esc(p.title) + '"></div>').join("") +
+              imgs.map((src) => '<div class="project-carousel-slide"><img src="' + attr(src) + '" alt="' + attr(p.title) + '"></div>').join("") +
             "</div>" +
             (imgs.length > 1
               ? '<button class="project-carousel-nav prev" aria-label="Previous image">' + CHEV_LEFT + "</button>" +
@@ -235,7 +249,7 @@
             '<span class="project-year">' + esc(p.year) + "</span>" +
             '<div class="project-title">' + esc(p.title) + "</div>" +
             '<p class="project-desc">' + esc(p.description) + "</p>" +
-            (p.projectUrl ? '<a class="project-link" href="' + esc(safeHref(p.projectUrl)) + '" target="_blank" rel="noopener noreferrer">View project ' + ARROW_ICON + "</a>" : "") +
+            (p.projectUrl ? '<a class="project-link" href="' + attr(safeHref(p.projectUrl)) + '" target="_blank" rel="noopener noreferrer">View project ' + ARROW_ICON + "</a>" : "") +
           "</div>" +
         "</div>"
       );
@@ -272,14 +286,14 @@
     el.innerHTML = data.achievements.map((a, idx) => {
       const cover = (a.imageUrls || [])[0];
       return (
-        '<div class="achievement-card" data-achievement="' + idx + '" tabindex="0" role="button" aria-label="View details for ' + esc(a.title) + '">' +
+        '<div class="achievement-card" data-achievement="' + idx + '" tabindex="0" role="button" aria-label="View details for ' + attr(a.title) + '">' +
           '<span class="achievement-expand-hint" aria-hidden="true">' + EXPAND_ICON + "</span>" +
-          (cover ? '<img class="achievement-image" src="' + cover + '" alt="' + esc(a.title) + '">' : "") +
+          (cover ? '<img class="achievement-image" src="' + attr(cover) + '" alt="' + attr(a.title) + '">' : "") +
           '<span class="achievement-year">' + esc(a.year) + "</span>" +
           '<div class="achievement-title">' + esc(a.title) + "</div>" +
           '<p class="achievement-desc">' + esc(a.description) + "</p>" +
           (a.credentialUrl
-            ? '<a class="achievement-credential" href="' + esc(safeHref(a.credentialUrl)) + '" target="_blank" rel="noopener noreferrer">View credential ' + ARROW_ICON + "</a>"
+            ? '<a class="achievement-credential" href="' + attr(safeHref(a.credentialUrl)) + '" target="_blank" rel="noopener noreferrer">View credential ' + ARROW_ICON + "</a>"
             : "") +
         "</div>"
       );
@@ -302,7 +316,7 @@
     if (!images.length) { slot.innerHTML = ""; return; }
     slot.innerHTML =
       '<div class="carousel">' +
-        '<div class="carousel-track">' + images.map((src) => '<div class="carousel-slide"><img src="' + src + '" alt=""></div>').join("") + "</div>" +
+        '<div class="carousel-track">' + images.map((src) => '<div class="carousel-slide"><img src="' + attr(src) + '" alt=""></div>').join("") + "</div>" +
         (images.length > 1
           ? '<button class="carousel-arrow prev" aria-label="Previous image">' + CHEV_LEFT + "</button>" +
             '<button class="carousel-arrow next" aria-label="Next image">' + CHEV_RIGHT + "</button>" +
@@ -435,19 +449,28 @@
     });
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    render();
+  document.addEventListener("DOMContentLoaded", async () => {
     updateThemeIcon();
     bindSmoothScroll();
-    initReveal();
     bindBurger();
     bindAchievementOverlay();
     document.getElementById("themeToggle").addEventListener("click", toggleTheme);
     document.getElementById("backToTop").addEventListener("click", (e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); });
 
-    // Live-refresh if content is edited in the admin panel in another tab.
-    window.addEventListener("storage", (e) => {
-      if (e.key === STORAGE_DATA_KEY) { data = loadData(); render(); }
-    });
+    data = await fetchData();
+    render();
+    initReveal(); // runs after render() so the freshly-created elements exist to observe
+
+    // Live-refresh for anyone with the site open when content is saved from
+    // the admin panel elsewhere — no page reload needed.
+    if (CONFIGURED) {
+      supabaseClient
+        .channel("site_content_changes")
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "site_content" }, (payload) => {
+          data = normalize(payload.new && payload.new.data ? payload.new.data : {});
+          render();
+        })
+        .subscribe();
+    }
   });
 })();
