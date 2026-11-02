@@ -96,17 +96,18 @@
     }
   }
   async function persist(d) {
-    const { error } = await supabaseClient
-      .from("site_content")
-      .update({ data: d, updated_at: new Date().toISOString() })
-      .eq("id", 1);
-    if (error) {
-      console.error("[admin] Save failed:", error);
-      toast("Save failed — check the browser console");
-      return false;
-    }
-    return true;
+  const { data: rows, error } = await supabaseClient
+    .from("site_content")
+    .update({ data: d, updated_at: new Date().toISOString() })
+    .eq("id", 1)
+    .select();
+  if (error || !rows || rows.length === 0) {
+    console.error("[admin] Save failed:", error || "0 rows updated (RLS or missing row)");
+    toast("Save failed — nothing was written. Check Supabase policies.");
+    return false;
   }
+  return true;
+}
 
   let data = JSON.parse(JSON.stringify(DEFAULT_DATA));
   function uid() {
