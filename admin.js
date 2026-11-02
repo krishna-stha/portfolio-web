@@ -10,12 +10,6 @@
     window.supabase &&
     typeof window.supabase.createClient === "function";
 
-  const supabaseClient = CONFIGURED
-    ? window.supabase.createClient(
-        window.SUPABASE_URL,
-        window.SUPABASE_ANON_KEY,
-      )
-    : null;
 
   const supabaseClient = CONFIGURED
     ? window.supabase.createClient(
